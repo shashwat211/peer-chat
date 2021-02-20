@@ -35,3 +35,5 @@ Use the following format for messaging:
 receiver_name/message
 
 ```
+### For testing on local machine
+For testing on a single machine, run the executable in multiple instances of the terminal. It would act similar to multi-computer network.
