@@ -222,7 +222,7 @@ void startChat(int svrsock, User users[], int num_users, struct sockaddr_in serv
 int main(int argc, char** argv) {
 	/* CHECK NUMBER OF ARGUMENTS */
 	if (argc != 2) {
-		fprintf(stderr, "USAGE: %s <PORT>\n", argv[0]);
+		fprintf(stderr, "USAGE: %s <YOUR PORT>\n", argv[0]);
 		exit(1);
 	}
 
