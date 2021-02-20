@@ -100,7 +100,7 @@ void sendMessageToPerson(char* buff, char* identity, User users[], int num_users
 		}
 	}
 	if (!personExists) {
-		printf("[-] Such a person does not exist.\n[-] Invalid format.\nTry again!\n");
+		printf("[-] Such a person does not exist.\n[-] Invalid format.\nTry again!\n\n");
 		return;
 	}
 
@@ -120,7 +120,7 @@ void sendMessageToPerson(char* buff, char* identity, User users[], int num_users
 	peeraddr.sin_port = htons(peer_port);
 
 	if ( connect(sockfd, (struct sockaddr*) &peeraddr, sizeof(peeraddr)) < 0 ) {
-		fprintf(stderr, "[-] Peer is offline.\n");
+		fprintf(stderr, "[-] Peer is offline.\n\n");
 		return;
 	}
 
