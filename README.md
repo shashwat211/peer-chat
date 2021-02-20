@@ -34,5 +34,4 @@ Enter 'quit' or 'exit' for exiting application.
 Use the following format for messaging:
 receiver_name/message
 
-
 ```
