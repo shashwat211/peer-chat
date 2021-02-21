@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #define SIZE 1024
-#define TIMEOUT 3
+#define TIMEOUT 0
 #define STDIN 0
 
 // Struct to define every user
@@ -71,6 +71,7 @@ char** parseMessage(char* buff) {
 		else if (x == 0) res[0][i] = buff[i];
 		else res[1][i - x] = buff[i];
 	}
+	buff[len - x] = '\0';
 	return res;
 }
 
@@ -128,7 +129,6 @@ void sendMessageToPerson(char* buff, char* identity, User users[], int num_users
 	strcpy(message, identity);
 	strcat(message, "/");
 	strcat(message, detail[1]);
-	// printf("Message is: %s\n", message);
 
 	if ( write(sockfd, message, strlen(message)) < 0 ) {
 		fprintf(stderr, "[-] Error writing to socket.\n");
@@ -147,42 +147,49 @@ void startChat(int svrsock, User users[], int num_users, struct sockaddr_in serv
 	size_t size = SIZE;
 	bool exit_flag = false;
 	char *buff = malloc(SIZE);
+	char** detail;
 
 	FD_ZERO(&masterfds);
 	FD_SET(svrsock, &masterfds);
 	FD_SET(STDIN, &masterfds);
 	maxfd = svrsock;
-	timeout.tv_sec = TIMEOUT;
-	timeout.tv_usec = 0;
 
 	while (true) {
+		timeout.tv_sec = TIMEOUT;
+		timeout.tv_usec = 0;
 		memcpy(&readfds, &masterfds, sizeof(readfds));
 		int result = select(maxfd + 1, &readfds, NULL, NULL, &timeout);
-
+ 
 		if (result == 0 && exit_flag) {
+			/* After TIMEOUT amount of time after entering 
+			quit/exit as input, the program enters here */
 			printf("Do you want to exit application? [Y/N]: ");
-			char ex;
-			scanf("%c", &ex);
-			if (ex == 'Y' || ex == 'y') break;
+			
+			getline(&buff, &size, stdin);
+			if (!strcmp(buff, "Y\n") || !strcmp(buff, "y\n")) break;
+			if (strlen(buff) != 2 || (strcmp(buff, "N\n") && strcmp(buff, "n\n"))) 
+				printf("[-] Invalid Character Input. Try quitting again.\n");
+			
 			exit_flag = false;
+			printf("\n");
 		} else if (result < 0 && errno != EINTR) {
+			/* select() error */
 			fprintf(stderr, "[-] Error in select() function\n");
 			exit(1);
 		} else if (result > 0) {
-			// If Server Socket is ready, accept connection
+			/* If Server Socket is ready, accept connection */
 			if ( FD_ISSET(svrsock, &readfds) ) {
 				peersock = accept(svrsock, (struct sockaddr*) &serveraddr, &len);
 				if ( peersock < 0 ) {
 					fprintf(stderr, "[-] Error in accept().\n");
 				} else {
-					// printf("Connection Established at %d\n", peersock);
 					FD_SET(peersock, &masterfds);
 					maxfd = (maxfd < peersock)? peersock: maxfd;
 				}
 				// Remove Server Socket from readfds
 				FD_CLR(svrsock, &readfds);
 			}
-			// If stdin is ready, send message to person, if person exists, else continue
+			/* If stdin is ready, send message to person, if person exists, else continue */
 			if ( FD_ISSET(STDIN, &readfds) ) {
 				getline(&buff, &size, stdin);
 				printf("\n");
@@ -191,19 +198,17 @@ void startChat(int svrsock, User users[], int num_users, struct sockaddr_in serv
 					exit_flag = true;
 					continue;
 				}
-				// printf("You want to send: %s", buff);
 				sendMessageToPerson(buff, identity, users, num_users);
 				continue;
 			}
-			// Check for all the other sockets which might be ready to get read from
+			/* Check for all the other sockets which might be ready to get read from */
 			for (int i = 1; i <= maxfd; i++) {
 				if ( FD_ISSET(i, &readfds) ) {
 					int res = recv(i, buff, SIZE, 0);
 					if (res > 0) {
 						buff[res] = '\0';
-						char** detail = parseMessage(buff);
+						detail = parseMessage(buff);
 						printf("%s: %s\n", detail[0], detail[1]);
-						freeMemory(detail);
 					} else if (res == 0) { // EOF
 						// Close and clear socket
 						close(i);
@@ -216,6 +221,7 @@ void startChat(int svrsock, User users[], int num_users, struct sockaddr_in serv
 			}
 		}
 	}
+	freeMemory(detail);
 	return;
 }
 
