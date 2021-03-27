@@ -71,7 +71,7 @@ char** parseMessage(char* buff) {
 		else if (x == 0) res[0][i] = buff[i];
 		else res[1][i - x] = buff[i];
 	}
-	buff[len - x] = '\0';
+	res[1][len - x] = '\0';
 	return res;
 }
 
